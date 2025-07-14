@@ -71,25 +71,13 @@ Log Files:
 if ($OpsGenieApiKey) {
     try {
         $AlertType, $Priority, $Responders = switch ($OverallExitCode) {
-            {$_ -in 0..7} { "INFO", "P5", @("team:Operations") }
-            8             { "WARNING", "P3", @("team:Operations", "team:Infrastructure") }
+            {$_ -in 0..1} { "INFO", "P5", @("team:Operations") }
+            {$_ -in 2..7} { "WARNING", "P3", @("team:Operations", "team:Infrastructure") }
             default       { "ERROR", "P1", @("team:Operations", "team:Infrastructure") }
         }
         
-        $Description = switch ($OverallExitCode) {
-            0 { "No files copied - files already exist in destination" }
-            1 { "All files copied successfully" }
-            2 { "Additional files exist in destination" }
-            3 { "Some files copied, additional files present" }
-            5 { "Some files copied, some mismatched" }
-            6 { "Additional and mismatched files exist" }
-            7 { "Files copied with mismatched and additional files" }
-            8 { "Several files didn't copy" }
-            default { "Serious error - check logs immediately" }
-        }
-        
         Send-OpsGenieAlert -ApiKey $OpsGenieApiKey -Message "Location $LocationNumber mirror $AlertType - Exit Code $OverallExitCode" `
-            -Description "Location Server: $LocationServer`nDate: $(Get-Date)`n`nShare Exit Code: $($ExitCodes[0])`nProfile Exit Code: $($ExitCodes[1])`nOverall: $OverallExitCode`n`nMeaning: $Description`n`nLogs: $SummaryLog" `
+            -Description "Location Server: $LocationServer`nDate: $(Get-Date)`n`nShare Exit Code: $($ExitCodes[0])`nProfile Exit Code: $($ExitCodes[1])`nOverall Exit Code: $OverallExitCode`n`nLog Files: $SummaryLog" `
             -Responders $Responders -Tags @("mirror-$($AlertType.ToLower())", "location-$LocationNumber", "robocopy", "exit-code-$OverallExitCode") -Priority $Priority
             
         Add-Content $SummaryLog "`nOpsGenie $AlertType alert sent - Priority: $Priority"
