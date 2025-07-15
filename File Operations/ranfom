@@ -1,0 +1,18 @@
+# Pre-calculate log file paths to avoid hashtable issues
+$ShareLogFile = Join-Path $LocationLogDir "robocopy-$LocationNumber-share-$TimeStamp.log"
+$ProfileLogFile = Join-Path $LocationLogDir "robocopy-$LocationNumber-profile-$TimeStamp.log"
+
+$Jobs = @(
+    @{ 
+        Name = "Share"
+        Source = $Paths.SourceShare
+        Dest = $Paths.DestShare
+        Log = $ShareLogFile
+    }
+    @{ 
+        Name = "Profile"
+        Source = $Paths.SourceProfile
+        Dest = $Paths.DestProfile
+        Log = $ProfileLogFile
+    }
+)
