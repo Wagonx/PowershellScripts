@@ -105,17 +105,6 @@ if ($MissingPaths) {
     exit 99
 }
 
-# Check disk space
-$DestDrive = (Split-Path $Paths.DestShare -Qualifier)
-$DiskSpace = Get-WmiObject -Class Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $DestDrive }
-$FreeSpaceGB = [math]::Round($DiskSpace.FreeSpace / 1GB, 2)
-$FreeSpacePercent = [math]::Round(($DiskSpace.FreeSpace / $DiskSpace.Size) * 100, 2)
-
-Write-MirrorLog "Destination disk space: $FreeSpaceGB GB free ($FreeSpacePercent%)" "INFO"
-if ($FreeSpacePercent -lt 10) {
-    Write-MirrorLog "WARNING: Low disk space on destination ($FreeSpacePercent% free)" "WARNING"
-}
-
 # Execute robocopy operations
 Write-MirrorLog "Starting robocopy operations..." "INFO"
 
@@ -168,8 +157,6 @@ Script Version: $ScriptVersion$TestModeHeader
 Results:
 $($Results | ForEach-Object { "- $($_.Name): Exit Code $($_.ExitCode)$(if ($TestMode) { " (TEST)" }) (Duration: $($_.Duration.ToString('hh\:mm\:ss')))" } | Out-String)
 Overall Exit Code: $OverallExitCode$(if ($TestMode) { " (TEST)" })
-
-Disk Space: $FreeSpaceGB GB free ($FreeSpacePercent%)
 
 Log Files:
 $($Results | ForEach-Object { "- $($_.Name): $($_.LogFile)" } | Out-String)
