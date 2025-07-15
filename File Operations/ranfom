@@ -20,3 +20,31 @@ $Jobs = @(
 
 Write-MirrorLog "DEBUG: Log file path = '$($Job.Log)'" "INFO"
     Write-MirrorLog "DEBUG: Log file type = $($Job.Log.GetType().FullName)" "INFO"
+
+
+$Results = foreach ($Job in $Jobs) {
+    Write-MirrorLog "Starting $($Job.Name) mirror: $($Job.Source) -> $($Job.Dest)" "INFO"
+    Write-MirrorLog "DEBUG: Log file path = '$($Job.Log)'" "INFO"
+    Write-MirrorLog "DEBUG: Log file type = $($Job.Log.GetType().FullName)" "INFO"
+    $StartTime = Get-Date
+    
+    if ($TestMode) {
+        Write-MirrorLog "TEST MODE: Running robocopy with /L (list only) flag..." "INFO"
+        Write-MirrorLog "DEBUG: Full robocopy command will be:" "INFO"
+        Write-MirrorLog "robocopy `"$($Job.Source)`" `"$($Job.Dest)`" /MIR /L /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX /XF ... `"/LOG:$($Job.Log)`" /NP /NDL /NC /BYTES /TS /TEE" "INFO"
+        
+        $ExitCode = & robocopy $Job.Source $Job.Dest /MIR /L /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX `
+            /XF *.tmp *.temp *~ *.swp *.lock *.log *.pst *.cab Thumbs.db `
+            /XD .snapshot temp '$RECYCLE.BIN' 'System Volume Information' HubSpot 'ID Scans' 'My Documents\My Pictures' 'Scanned IDs' 'Scanned ID''s' 'Scanned Id''s Bryan' 'Share\Programs\Fiserv' 'Share\programs\loanproc' 'Share\Programs\patches' 'Share\Replaced Computers' CCCDataBackup ProfileData `
+            "/LOG:$($Job.Log)" /NP /NDL /NC /BYTES /TS /TEE
+        $ExitCode = $LASTEXITCODE
+    } else {
+        Write-MirrorLog "DEBUG: Full robocopy command will be:" "INFO"
+        Write-MirrorLog "robocopy `"$($Job.Source)`" `"$($Job.Dest)`" /MIR /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX /XF ... `"/LOG:$($Job.Log)`" /NP /NDL /NC /BYTES /TS /TEE" "INFO"
+        
+        $ExitCode = & robocopy $Job.Source $Job.Dest /MIR /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX `
+            /XF *.tmp *.temp *~ *.swp *.lock *.log *.pst *.cab Thumbs.db `
+            /XD .snapshot temp '$RECYCLE.BIN' 'System Volume Information' HubSpot 'ID Scans' 'My Documents\My Pictures' 'Scanned IDs' 'Scanned ID''s' 'Scanned Id''s Bryan' 'Share\Programs\Fiserv' 'Share\programs\loanproc' 'Share\Programs\patches' 'Share\Replaced Computers' CCCDataBackup ProfileData `
+            "/LOG:$($Job.Log)" /NP /NDL /NC /BYTES /TS /TEE
+        $ExitCode = $LASTEXITCODE
+    }
