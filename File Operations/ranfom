@@ -16,3 +16,7 @@ $Jobs = @(
         Log = $ProfileLogFile
     }
 )
+
+
+Write-MirrorLog "DEBUG: Log file path = '$($Job.Log)'" "INFO"
+    Write-MirrorLog "DEBUG: Log file type = $($Job.Log.GetType().FullName)" "INFO"
