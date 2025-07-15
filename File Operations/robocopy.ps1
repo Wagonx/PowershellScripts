@@ -118,13 +118,16 @@ $Results = foreach ($Job in $Jobs) {
     $StartTime = Get-Date
     
     if ($TestMode) {
-        Write-MirrorLog "TEST MODE: Simulating robocopy operation..." "INFO"
-        Start-Sleep -Seconds 5
-        $ExitCode = 0
+        Write-MirrorLog "TEST MODE: Running robocopy with /L (list only) flag..." "INFO"
+        $ExitCode = & robocopy $Job.Source $Job.Dest /MIR /L /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX `
+            /XF *.tmp *.temp *~ *.swp *.lock *.log *.pst *.cab Thumbs.db `
+            /XD .snapshot temp '$RECYCLE.BIN' 'System Volume Information' HubSpot 'ID Scans' 'My Documents\My Pictures' 'Scanned IDs' 'Scanned ID''s' 'Scanned Id''s Bryan' 'Share\Programs\Fiserv' 'Share\programs\loanproc' 'Share\Programs\patches' 'Share\Replaced Computers' CCCDataBackup ProfileData `
+            /LOG:$Job.Log /NP /NDL /NC /BYTES /TS /TEE
+        $ExitCode = $LASTEXITCODE
     } else {
         $ExitCode = & robocopy $Job.Source $Job.Dest /MIR /R:3 /W:10 /MT:8 /COPY:DATSOU /SECFIX `
-            /XF *.tmp *.temp *~ *.swp *.lock *.log `
-            /XD .snapshot temp '$RECYCLE.BIN' 'System Volume Information' `
+            /XF *.tmp *.temp *~ *.swp *.lock *.log *.pst *.cab Thumbs.db `
+            /XD .snapshot temp '$RECYCLE.BIN' 'System Volume Information' HubSpot 'ID Scans' 'My Documents\My Pictures' 'Scanned IDs' 'Scanned ID''s' 'Scanned Id''s Bryan' 'Share\Programs\Fiserv' 'Share\programs\loanproc' 'Share\Programs\patches' 'Share\Replaced Computers' CCCDataBackup ProfileData `
             /LOG:$Job.Log /NP /NDL /NC /BYTES /TS /TEE
         $ExitCode = $LASTEXITCODE
     }
