@@ -1,6 +1,9 @@
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$ComPort
+    [Parameter(Mandatory=$false)]
+    [string]$ComPort,
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$ListAll
 )
 
 # Add Windows API function signatures
@@ -44,6 +47,39 @@ public class Win32API
     public const uint PL2303_IOCTL_GET_VERSION = 0x222068;
 }
 "@
+
+function Find-ProlificDevices {
+    [CmdletBinding()]
+    param()
+    
+    Write-Verbose "Searching for Prolific devices..."
+    
+    try {
+        # Query WMI for PORT devices (COM ports)
+        $devices = Get-WmiObject -Class Win32_PnPEntity -Filter "ConfigManagerErrorCode = 0" | 
+                   Where-Object { $_.Name -match "Prolific.*\(COM\d+\)" -and $_.PNPClass -eq "Ports" }
+        
+        $prolificPorts = @()
+        
+        foreach ($device in $devices) {
+            if ($device.Name -match "\(COM(\d+)\)") {
+                $comNumber = $matches[1]
+                $prolificPorts += [PSCustomObject]@{
+                    Port = "COM$comNumber"
+                    FriendlyName = $device.Name
+                    DeviceID = $device.DeviceID
+                    Description = $device.Description
+                }
+            }
+        }
+        
+        return $prolificPorts
+    }
+    catch {
+        Write-Warning "Failed to query for Prolific devices: $($_.Exception.Message)"
+        return @()
+    }
+}
 
 function Get-PL2303ChipVersion {
     param([string]$PortName)
@@ -143,6 +179,38 @@ function Get-PL2303ChipVersion {
 }
 
 # Main execution
+if ($ListAll) {
+    Write-Verbose "Listing all Prolific devices..."
+    $devices = Find-ProlificDevices
+    if ($devices.Count -eq 0) {
+        Write-Warning "No Prolific devices found."
+    } else {
+        Write-Output $devices
+    }
+    exit 0
+}
+
+# If no COM port specified, try to find Prolific devices automatically
+if (-not $ComPort) {
+    Write-Verbose "No COM port specified, searching for Prolific devices..."
+    $devices = Find-ProlificDevices
+    
+    if ($devices.Count -eq 0) {
+        Write-Error "No Prolific devices found. Please specify a COM port manually with -ComPort parameter."
+        exit 1
+    }
+    elseif ($devices.Count -eq 1) {
+        $ComPort = $devices[0].Port
+        Write-Verbose "Found single Prolific device: $($devices[0].FriendlyName) on $ComPort"
+    }
+    else {
+        Write-Output "Multiple Prolific devices found:"
+        Write-Output $devices | Format-Table Port, FriendlyName -AutoSize
+        Write-Error "Multiple devices found. Please specify which COM port to use with -ComPort parameter."
+        exit 1
+    }
+}
+
 try {
     $result = Get-PL2303ChipVersion -PortName $ComPort
     
