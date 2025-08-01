@@ -38,7 +38,7 @@ public class Win32API
     public const uint GENERIC_WRITE = 0x40000000;
     public const uint OPEN_EXISTING = 3;
     public const uint FILE_ATTRIBUTE_NORMAL = 0x80;
-    public const IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+    public static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
     
     // PL-2303 specific IOCTL code from the disassembly
     public const uint PL2303_IOCTL_GET_VERSION = 0x222068;
