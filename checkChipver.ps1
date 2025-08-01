@@ -59,20 +59,26 @@ function Find-ProlificDevices {
         $devices = Get-WmiObject -Class Win32_PnPEntity -Filter "ConfigManagerErrorCode = 0" | 
                    Where-Object { $_.Name -match "Prolific.*\(COM\d+\)" -and $_.PNPClass -eq "Ports" }
         
+        Write-Verbose "Found $($devices.Count) matching WMI objects"
+        
         $prolificPorts = @()
         
         foreach ($device in $devices) {
+            Write-Verbose "Processing device: $($device.Name)"
             if ($device.Name -match "\(COM(\d+)\)") {
                 $comNumber = $matches[1]
-                $prolificPorts += [PSCustomObject]@{
+                $portInfo = [PSCustomObject]@{
                     Port = "COM$comNumber"
                     FriendlyName = $device.Name
                     DeviceID = $device.DeviceID
                     Description = $device.Description
                 }
+                $prolificPorts += $portInfo
+                Write-Verbose "Added port: $($portInfo.Port)"
             }
         }
         
+        Write-Verbose "Total ports found: $($prolificPorts.Count)"
         return $prolificPorts
     }
     catch {
@@ -204,8 +210,12 @@ if (-not $ComPort) {
         Write-Verbose "Found single Prolific device: $($devices[0].FriendlyName) on $ComPort"
     }
     else {
+        Write-Verbose "Found $($devices.Count) Prolific devices"
         Write-Output "Multiple Prolific devices found:"
-        Write-Output $devices | Format-Table Port, FriendlyName -AutoSize
+        foreach ($device in $devices) {
+            Write-Output "  $($device.Port) - $($device.FriendlyName)"
+        }
+        Write-Output ""
         Write-Error "Multiple devices found. Please specify which COM port to use with -ComPort parameter."
         exit 1
     }
