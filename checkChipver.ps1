@@ -201,18 +201,21 @@ if (-not $ComPort) {
     Write-Verbose "No COM port specified, searching for Prolific devices..."
     $devices = Find-ProlificDevices
     
-    if ($devices.Count -eq 0) {
+    # Convert to array to ensure consistent behavior
+    $deviceArray = @($devices)
+    
+    if ($deviceArray.Count -eq 0) {
         Write-Error "No Prolific devices found. Please specify a COM port manually with -ComPort parameter."
         exit 1
     }
-    elseif ($devices.Count -eq 1) {
-        $ComPort = $devices[0].Port
-        Write-Verbose "Found single Prolific device: $($devices[0].FriendlyName) on $ComPort"
+    elseif ($deviceArray.Count -eq 1) {
+        $ComPort = $deviceArray[0].Port
+        Write-Verbose "Found single Prolific device: $($deviceArray[0].FriendlyName) on $ComPort"
     }
     else {
-        Write-Verbose "Found $($devices.Count) Prolific devices"
+        Write-Verbose "Found $($deviceArray.Count) Prolific devices"
         Write-Output "Multiple Prolific devices found:"
-        foreach ($device in $devices) {
+        foreach ($device in $deviceArray) {
             Write-Output "  $($device.Port) - $($device.FriendlyName)"
         }
         Write-Output ""
